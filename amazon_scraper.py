@@ -4,8 +4,20 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from datetime import datetime
 from time import sleep
+import json
 
 HEADERS = ({"User-Agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"})
+
+def notifier(message):
+    msg = {"type":"note", "title":"Amazon Alert", "body":message}
+    token = "o.hcbMmtmiqQwDSPoEsX9XdUKuFeejfuie"
+    resp = requests.post('https://api.pushbullet.com/v2/pushes', data=json.dumps(msg),
+                         headers={'Authorization': 'Bearer ' + token, "Content-Type": "application/json"})
+
+    if resp.status_code != 200:
+        raise Exception('Error', resp.status_code)
+    else:
+        print('Message Sent!')
 
 def search_product_list(interval_count = 1, interval_hours = 6):
     prod_tracker = pd.read_csv('trackers/TRACKER_PRODUCTS.csv')
@@ -55,7 +67,8 @@ def search_product_list(interval_count = 1, interval_hours = 6):
 
             try:
                 if price< prod_tracker.buy_below[x]:
-                    print('ALERT!!!!\nBuy the '+prod_tracker.code[x]+'\n'+prod_tracker.url[x])
+                    message = 'Price Drop Alert!\nBuy: {name}\nPrice: {price}\nURL: {url}'.format(name=prod_tracker.code[x], price=price, url=prod_tracker.url[x])
+                    notifier(message)
 
             except:
                 pass
